@@ -1,0 +1,61 @@
+<section>
+  <h1 class="text-3xl mb-4">Nuestros libros</h1>
+  <div class="w-5/6 max-w-[1200px] mx-auto mb-8 flex flex-col gap-4 md:flex-row md:justify-between">
+    <div class=" border border-primary-color rounded-lg grid items-center px-4 py-0 h-12">
+      {{#if user}}
+      <h4>Bienvenido, {{ user.first_name }}</h4>
+      {{/if}}
+    </div>
+    <form action="/products/category" method="post" class="flex justify-center md:justify-end gap-2 ">
+      <select name="category" class="select select-bordered border-primary-color w-fit max-w-xs">
+        <option value="" selected>Todos los libros</option>
+        <option value="novela">Novelas</option>
+        <option value="cuento">Cuentos</option>
+        <option value="romance">Romance</option>
+        <option value="fantasía">Fantasía</option>
+        <option value="terror">Terror</option>
+        <option value="teatro">Teatro</option>
+        <option value="ciencia ficción">Ciencia ficción</option>
+        <option value="policial">Policial</option>
+        <option value="aventura">Aventura</option>
+        <option value="juvenil">Juvenil</option>
+        <option value="colección">Colecciones</option>
+      </select>
+      <input type="submit" value="Buscar" class="btn">
+    </form>
+  </div>
+
+  <div
+    class="grid sm:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3 gap-10 w-5/6 max-w-[1200px] mx-auto"
+  >
+
+    {{#each products.docs}}
+      <div class="card border border-primary-color">
+        <figure>
+          <div class="h-80"><img
+              class="h-full"
+              src="{{this.thumbnails}}"
+              alt="{{this.title}}"
+            /></div>
+        </figure>
+        <div class="card-body">
+          <h2 class="card-title text-xl font-bold mx-auto">{{this.title}}</h2>
+          <h4 class="text-sm">{{this.author}}</h4>
+          <h4 class="text-sm">${{this.price}}</h4>
+          <div class="card-actions justify-center mt-4">
+            <a href="/products/{{this.id}}" class="btn">Ver detalle</a>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+
+  <div class="my-4">
+    {{#if products.hasPrevPage}}
+      <a href="{{products.prevLink}}" class="btn">Anterior</a>
+    {{/if}}
+    {{#if products.hasNextPage}}
+      <a href="{{products.nextLink}}" class="btn">Siguiente</a>
+    {{/if}}
+  </div>
+</section>

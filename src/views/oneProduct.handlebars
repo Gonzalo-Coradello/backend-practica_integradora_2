@@ -1,0 +1,38 @@
+<section>
+
+  <h2 class="text-2xl mb-8">Detalles del producto</h2>
+
+  <div class="card lg:card-side gap-4 w-4/5 mx-auto mt-4">
+    <div class="max-h-[500px] flex justify-center basis-1/2">
+      <img
+        class="object-cover h-full rounded-xl"
+        src={{product.thumbnails}}
+        alt={{product.title}}
+      />
+    </div>
+    <div class="card-body basis-1/2">
+      <h2 class="card-title mx-auto">{{product.title}}</h2>
+      <h3>{{product.author}}</h3>
+      <p>{{product.description}}</p>
+      <h3>${{product.price}}</h3>
+      <form
+        action="/carts/63d28b5d6046e6ae60e8b400/products/{{product._id}}"
+        method="post"
+      >
+        <input
+          type="submit"
+          value="Agregar al carrito"
+          class="btn btn-outline mt-3"
+        />
+      </form>
+    </div>
+  </div>
+  <form action="/products/delete/{{product._id}}" method="get">
+        <input
+          type="submit"
+          value="Eliminar producto"
+          class="btn btn-ghost my-4"
+        />
+      </form>
+
+</section>

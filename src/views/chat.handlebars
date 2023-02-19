@@ -1,0 +1,16 @@
+
+<div class="w-fit mx-auto">
+    <h2 class="text-2xl mb-8">Chat</h2>
+    <form id="chatbox">
+        <i id="username" class="block text-left mb-2"></i>
+        <input type="text" id="msg" placeholder="Escriba su mensaje" class="input input-bordered w-full max-w-xs">
+        <button class="btn mt-4">Enviar</button>
+    </form>
+</div>
+<div id="messageLogs">
+</div>
+
+
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/index.js"></script>
