@@ -2,34 +2,36 @@ import { Router } from 'express'
 import passport from 'passport'
 import CartModel from '../dao/models/cart.model.js'
 import ProductModel from '../dao/models/product.model.js'
-import UserModel from '../dao/models/user.model.js'
-import { createHash, isValidPassword } from '../utils.js'
+import { passportCall, viewsAuthorization } from '../utils.js'
+
 
 const router = Router()
 
-function requireAuth(req, res, next) {
-    if(req.session?.user) {
-        return next()
-    } else {
-        return res.status(401).redirect('/sessions/login')
-    }
-}
+// function requireAuth(req, res, next) {
+//     if(req.session?.user) {
+//         return next()
+//     } else {
+//         return res.status(401).redirect('/sessions/login')
+//     }
+// }
 
-function logged(req, res, next) {
-    if(!req.session?.user) {
-        return next()
-    } else {
-        return res.status(400).redirect('/products')
-    }
-}
+// function logged(req, res, next) {
+//     if(!req.session?.user) {
+//         return next()
+//     } else {
+//         return res.status(400).redirect('/products')
+//     }
+// }
 
 
 // Redirección para empezar por la pantalla de login
-router.get('/', requireAuth)
+router.get('/', (req, res) => {
+    res.redirect('/sessions/login')
+})
 
 
 // Get products
-router.get('/products', requireAuth, async (req, res) => {
+router.get('/products', passportCall('current'), viewsAuthorization('user'), async (req, res) => {
     try {
         const limit = req.query?.limit || 10
         const page = req.query?.page || 1
@@ -60,7 +62,7 @@ router.get('/products', requireAuth, async (req, res) => {
         products.prevLink = products.hasPrevPage ? `/products?page=${products.prevPage}&limit=${limit}${category ? `&category=${category}` : ''}${stock ? `&stock=${stock}` : ''}` : ''
         products.nextLink = products.hasNextPage ? `/products?page=${products.nextPage}&limit=${limit}${category ? `&category=${category}` : ''}${stock ? `&stock=${stock}` : ''}` : ''
 
-        const user = req.session.user
+        const user = req.user
         res.render('products', {products, user})
     } catch (error) {
         console.log(error)
@@ -71,8 +73,8 @@ router.get('/products', requireAuth, async (req, res) => {
 
 
 // Create products form
-router.get('/products/create', async (req, res) => {
-    const user = req.session.user
+router.get('/products/create', passportCall('current'), viewsAuthorization('admin'), async (req, res) => {
+    const user = req.user
     res.render('create', {user})
 })
 
@@ -89,11 +91,11 @@ router.get('/products/delete/:pid', async (req, res) => {
 })
 
 // Get one product
-router.get('/products/:pid', async (req, res) => {
+router.get('/products/:pid', passportCall('current'), viewsAuthorization('user'), async (req, res) => {
     try {
         const pid = req.params.pid
         const product = await ProductModel.findOne({_id: pid}).lean().exec()
-        const user = req.session.user
+        const user = req.user
         
         res.render('oneProduct', { product, user })
     } catch(error) {
@@ -130,13 +132,13 @@ router.post('/products/category', async (req, res) => {
 
 
 // Get cart products
-router.get('/carts/:cid', async (req, res) => {
+router.get('/carts/:cid', passportCall('current'), viewsAuthorization('user'), async (req, res) => {
     try {
 
         const cid = req.params.cid
         const products = await CartModel.findOne({_id: cid}).populate('products.product').lean()
 
-        const user = req.session.user
+        const user = req.user
 
         res.render('cart', {products, user})
 
@@ -179,53 +181,37 @@ router.post('/carts/:cid/products/:pid', async (req, res) => {
 // Sessions
 
 // Vista para registrar usuarios
-router.get('/sessions/register', logged, (req, res) => {
+router.get('/sessions/register', (req, res) => {
     res.render('sessions/register')
 })
 
 // Crear usuarios en la DB
-router.post('/sessions/register', passport.authenticate('register', {failureRedirect: 'failregister'}), async( req, res) => {
+router.post('/sessions/register', passportCall('register'), async( req, res) => {
     res.redirect('/sessions/login')
 })
-router.get('/failregister', async (req, res) => {
-    res.status(400).render('errors/base', {error: 'Failed to register'})
-})
+
 
 // Vista de login
-router.get('/sessions/login', logged, (req, res) => {
+router.get('/sessions/login', (req, res) => {
     res.render('sessions/login')
 })
 
 // Login
-router.post('/sessions/login', passport.authenticate('login', {failureRedirect: '/faillogin'}), async (req, res) => {
+router.post('/sessions/login', passportCall('login'), async (req, res) => {
     const user = req.user
     if(!user) return res.status(400).json({status: 'error', error: 'Invalid credentials'})
 
-    req.session.user = {
-        first_name: user.first_name,
-        last_name: user.last_name,
-        age: user.age,
-        email: user.email,
-        role: user.role
-    }
-    res.redirect('/products')
-})
-router.get('/faillogin', (req, res) => {
-    res.status(400).render('errors/base', {error: 'Failed login'})
+    res.cookie('cookieToken', user.token).redirect('/products')
 })
 
 // Cerrar sesión
 router.get('/sessions/logout', (req, res) => {
-    req.session.destroy(err => {
-        if(err) {
-            res.status(500).render('errors/base', {error: err})
-        } else res.redirect('/sessions/login')
-    })
+    res.clearCookie('cookieToken').redirect('/sessions/login')
 })
 
 // Perfil del usuario
-router.get('/sessions/user', requireAuth, (req, res) => {
-    const user = req.session.user
+router.get('/sessions/user', passportCall('current'), viewsAuthorization('user'), (req, res) => {
+    const user = req.user
 
     if(!user) {
         return res.status(404).render('errors/base', {
@@ -238,8 +224,8 @@ router.get('/sessions/user', requireAuth, (req, res) => {
 
 // Iniciar sesión con Github
 router.get('/api/sessions/githubcallback', passport.authenticate('github', {failureRedirect: '/login'}), async (req, res) => {
-    req.session.user = req.user
-    return res.redirect('/products')
+
+    return res.cookie('cookieToken', req.user.token).redirect('/products')
 })
 
 export default router

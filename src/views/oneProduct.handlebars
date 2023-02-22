@@ -16,7 +16,7 @@
       <p>{{product.description}}</p>
       <h3>${{product.price}}</h3>
       <form
-        action="/carts/63d28b5d6046e6ae60e8b400/products/{{product._id}}"
+        action="/carts/{{user.cart}}/products/{{product._id}}"
         method="post"
       >
         <input

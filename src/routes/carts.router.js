@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import cartModel from '../dao/models/cart.model.js'
+import CartModel from '../dao/models/cart.model.js'
 import productModel from '../dao/models/product.model.js'
 
 const router = Router()
@@ -7,7 +7,7 @@ const router = Router()
 // Crear carrito
 router.post('/', async (req, res) => {
     try {
-        const cart = await cartModel.create({products: []})
+        const cart = await CartModel.create({products: []})
         res.json({ status: "success", payload: cart })
     } catch(error) {
         console.log(error)
@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
 router.get('/:cid', async (req, res) => {
     try {
         const cid = req.params.cid
-        const products = await cartModel.findOne({_id: cid}).populate('products.product')
+        const products = await CartModel.findOne({_id: cid}).populate('products.product')
         res.json({ status: "success", payload: products })    
     } catch(error) {
         console.log(error)
@@ -33,7 +33,7 @@ router.post('/:cid/products/:pid', async (req, res) => {
         const cid = req.params.cid
         const pid = req.params.pid
 
-        const cart = await cartModel.findOne({_id: cid})
+        const cart = await CartModel.findOne({_id: cid})
         if(!cart) return res.send({status: "error", error: 'No se ha encontrado el carrito'})
 
         const product = await productModel.findOne({_id: pid})
@@ -45,7 +45,7 @@ router.post('/:cid/products/:pid', async (req, res) => {
             await cart.save()
         } else {
             cart.products[productIndex].quantity++
-            await cartModel.updateOne({_id: cid}, cart)
+            await CartModel.updateOne({_id: cid}, cart)
         }
 
         res.json({ status: "success", payload: cart })
@@ -60,7 +60,7 @@ router.put('/:cid', async (req, res) => {
     try {
         const cid = req.params.cid
         const products = req.body
-        const cart = await cartModel.findOne({_id: cid})
+        const cart = await CartModel.findOne({_id: cid})
 
         cart.products = products
         await cart.save()
@@ -80,7 +80,7 @@ router.put('/:cid/products/:pid', async (req, res) => {
         const pid = req.params.pid
         const quantity = req.body.quantity
 
-        const cart = await cartModel.findOne({_id: cid})
+        const cart = await CartModel.findOne({_id: cid})
         if(!cart) return res.send({status: "error", error: 'No se ha encontrado el carrito'})
 
         const product = await productModel.findOne({_id: pid})
@@ -103,7 +103,7 @@ router.put('/:cid/products/:pid', async (req, res) => {
 router.delete('/:cid', async (req, res) => {
     try {
         const cid = req.params.cid
-        const cart = await cartModel.findOne({_id: cid})
+        const cart = await CartModel.findOne({_id: cid})
         cart.products = []
         await cart.save()
         
@@ -121,7 +121,7 @@ router.delete('/:cid/products/:pid', async (req, res) => {
         const cid = req.params.cid
         const pid = req.params.pid
 
-        const cart = await cartModel.findOne({_id: cid})
+        const cart = await CartModel.findOne({_id: cid})
         if(!cart) return res.send({status: "error", error: 'No se ha encontrado el carrito'})
 
         const product = await productModel.findOne({_id: pid})
